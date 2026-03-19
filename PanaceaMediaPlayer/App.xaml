@@ -1,0 +1,15 @@
+<Application x:Class="PanaceaMediaPlayer.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            StartupUri="Views/LoginWindow.xaml">
+    <Application.Resources>
+         <Style TargetType="Button">
+            <Setter Property="Background" Value="#444"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="5,2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#666"/>
+        </Style>
+    </Application.Resources>
+    
+</Application>

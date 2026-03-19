@@ -1,0 +1,76 @@
+﻿using System.Windows;
+using PanaceaMediaPlayer.ViewModels;
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Controls;
+
+namespace PanaceaMediaPlayer.Views
+{
+    public partial class MainWindow : Window
+    {
+        private CancellationTokenSource _downloadCts;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private async void MediaList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var vm = this.DataContext as MainViewModel;
+            if (vm == null) return;
+
+            var item = vm.SelectedItem;
+            if (item == null || string.IsNullOrEmpty(item.StreamUrl))
+            {
+                MainPlayer.Source = null;
+                return;
+            }
+
+            _downloadCts?.Cancel();
+            _downloadCts = new CancellationTokenSource();
+
+            try
+            {
+                string bearerToken = vm.BearerToken; // Asegúrate de exponer el token en el ViewModel
+                var tempFile = await DownloadProtectedToTempFileAsync(item.StreamUrl, bearerToken, _downloadCts.Token);
+                if (tempFile != null)
+                {
+                    Dispatcher.Invoke(() => MainPlayer.Source = new Uri(tempFile));
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                vm.StatusMessage = "Error reproduciendo: " + ex.Message;
+            }
+        }
+
+        private async Task<string> DownloadProtectedToTempFileAsync(string url, string bearerToken, CancellationToken ct)
+        {
+            using (var client = new HttpClient())
+            {
+                if (!string.IsNullOrEmpty(bearerToken))
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", bearerToken);
+
+                using (var resp = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct))
+                {
+                    resp.EnsureSuccessStatusCode();
+
+                    var ext = ".mp4"; // Podrías deducir esto del Content-Type
+                    var tmpPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ext);
+
+                    using (var fs = new FileStream(tmpPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await resp.Content.CopyToAsync(fs);
+                    }
+
+                    return tmpPath;
+                }
+            }
+        }
+    }
+}

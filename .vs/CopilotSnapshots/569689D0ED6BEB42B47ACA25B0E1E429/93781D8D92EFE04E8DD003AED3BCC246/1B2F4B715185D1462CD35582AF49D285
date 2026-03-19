@@ -1,0 +1,13 @@
+﻿using System.Windows;
+using PanaceaMediaPlayer.ViewModels;
+
+namespace PanaceaMediaPlayer.Views
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+    }
+}

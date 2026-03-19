@@ -1,0 +1,106 @@
+﻿<Window x:Class="PanaceaMediaPlayer.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PanaceaMediaPlayer.ViewModels"
+        mc:Ignorable="d"
+        Title="Mi Reproductor Panacea" Height="600" Width="900" 
+        Background="#1A1A1A" Foreground="White">
+    <Window.Resources>
+        <!-- Ayudante para convertir booleanos en Visibilidad (WPF lo necesita) -->
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
+    <!-- El DataContext enlaza la ventana con el ViewModel -->
+    <Window.DataContext>
+        <local:MainViewModel />
+    </Window.DataContext>
+    <Grid>
+        <!-- Definimos 2 columnas: lista a la izq y contenido a la der -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <!-- 3 filas: arriba cabecera, medio cuerpo, abajo estado -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Cabecera -->
+        <Border Grid.ColumnSpan="2" Background="#2E2E2E" Padding="15">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Panacea Media Center" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+                <Button Content="Refrescar" Command="{Binding LoadDataCommand}" Margin="20,0,0,0" Padding="10,2"/>
+                <ProgressBar IsIndeterminate="True" Width="100" Margin="20,0" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Lista de videos a la izquierda -->
+        <ListBox x:Name="MediaList" SelectionChanged="MediaList_SelectionChanged" Grid.Row="1" Grid.Column="0" 
+                 ItemsSource="{Binding MediaItems}" 
+                 SelectedItem="{Binding SelectedItem}"
+                 Background="Transparent" BorderThickness="0" BorderBrush="#333"
+                 HorizontalContentAlignment="Stretch">
+            <ListBox.Resources>
+                <!-- Diseño para cada fila de la lista -->
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Padding" Value="10"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                    <Setter Property="BorderBrush" Value="#444"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Style>
+            </ListBox.Resources>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <!-- Mostramos el título y el tipo -->
+                        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14"/>
+                        <TextBlock Text="{Binding Type}" FontSize="11" Opacity="0.7"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Reproductor y Datos a la derecha -->
+        <Grid Grid.Row="1" Grid.Column="1" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- El reproductor de video (usa MediaElement) -->
+            <Border Background="Black" CornerRadius="5">
+                <MediaElement Name="MainPlayer" LoadedBehavior="Play" UnloadedBehavior="Close" Stretch="Uniform"/>
+            </Border>
+
+            <!-- Metadata (datos del video seleccionado) -->
+            <ScrollViewer Grid.Row="1" Margin="0,15,0,0">
+                <StackPanel DataContext="{Binding SelectedItem}" Visibility="{Binding DataContext.HasSelectedMedia, RelativeSource={RelativeSource AncestorType=Grid}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding Description}" FontSize="14" Opacity="0.9" TextWrapping="Wrap" Margin="0,10"/>
+                    <WrapPanel Margin="0,5">
+                        <TextBlock Text="Categoría: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding CategoryName}" Margin="0,0,15,0"/>
+                        <TextBlock Text="Duración: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding DisplayDuration}" Margin="0,0,15,0"/>
+                        <TextBlock Text="Año: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Year}"/>
+                    </WrapPanel>
+                </StackPanel>
+            </ScrollViewer>
+            
+            <!-- Texto cuando no hay nada seleccionado -->
+            <TextBlock Grid.RowSpan="2" Text="Selecciona algo para reproducir" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="18" Opacity="0.5" 
+                       Visibility="{Binding NotHasSelectedMedia, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        </Grid>
+
+        <!-- Barra inferior con mensajes de estado -->
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Background="#222" Padding="5">
+            <TextBlock Text="{Binding StatusMessage}" Opacity="0.8" FontSize="12"/>
+        </Border>
+    </Grid>
+
+</Window>
